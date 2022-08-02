@@ -24,13 +24,22 @@ Activity table:
 | 3         | 4         | 2018-07-03 | 5            |
 +-----------+-----------+------------+--------------+
 
-1. Write an SQL query that reports the fraction of players that logged in again on the day after the day they first logged in, rounded to 2 decimal places. 
+QUESTION:
+
+Write an SQL query that reports the fraction of players that logged in again on the day after the day they first logged in, rounded to 2 decimal places. 
 In other words, you need to count the number of players that logged in for at least two consecutive days starting from their first login date, 
 then divide that number by the total number of players.
 
 SOLUTION:
 
-SELECT Player_Id, 
-        Event_date, 
-        SUM(games_played) OVER (PARTITION BY Player_Id ORDER BY Event_date) AS games_played_so_far
-FROM Activity;
+WITH lagged AS (
+    SELECT player_id,
+           MIN(event_date) OVER (PARTITION BY player_id 
+               ORDER BY event_date) as min_event_date,
+           LEAD(event_date) OVER (PARTITION BY player_id 
+               ORDER BY event_date) as next_date  
+    FROM Activity)
+    
+SELECT ROUND(SUM(CASE WHEN next_date = min_event_date + INTERVAL '1' DAY THEN 1 
+                   ELSE 0 END)::NUMERIC/COUNT(DISTINCT player_id),2) AS retention
+FROM lagged
