@@ -1,0 +1,6 @@
+
+
+SELECT Player_Id, 
+        Event_date, 
+        SUM(games_played) OVER (PARTITION BY Player_Id ORDER BY Event_date) AS games_played_so_far
+FROM Activity;
